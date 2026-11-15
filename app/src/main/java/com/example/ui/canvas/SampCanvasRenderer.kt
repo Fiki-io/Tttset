@@ -448,9 +448,8 @@ private fun DrawScope.drawBitmapAtlasText(
 ) {
     if (atlas.width < 16 || atlas.height < 16) return
 
-    val fontTable = fontsDat?.tableForSampFont(element.font.value)
-    val charHeightPx = layout.lineHeightVirtual * scaleY * 1.25f
-    val glyphWidthScale = element.letterSizeX.coerceAtLeast(0.05f) * scaleX
+    val charHeightPx = layout.lineHeightVirtual * scaleY * SampLayoutMath.GLYPH_HEIGHT_LINE_RATIO
+    val glyphWidthScale = element.letterSizeX.coerceAtLeast(0.05f) * SampLayoutMath.FONT_SCALE_X_FACTOR * scaleX
     val bgColor = SampColorUtils.rgbaLongToComposeColor(element.backgroundColorRgba)
     val shadowShift = element.shadow.coerceAtLeast(0)
     val outlineWidth = element.outline.coerceAtLeast(0)
@@ -465,8 +464,7 @@ private fun DrawScope.drawBitmapAtlasText(
 
         for (run in line.runs) {
             for (ch in run.text) {
-                val advanceVirtual = (fontTable?.charAdvance(ch, element.font.value, element.proportional)?.toFloat()
-                    ?: 15f) * element.letterSizeX.coerceAtLeast(0.05f)
+                val advanceVirtual = SampLayoutMath.charAdvanceVirtual(ch, element, fontsDat)
 
                 if (ch != ' ') {
                     val cellIdx = SampFontAtlasLayout.resolveAtlasIndex(ch, element.font.value)
@@ -497,13 +495,15 @@ private fun DrawScope.drawBitmapAtlasText(
 
                         // Outline
                         if (outlineWidth > 0) {
-                            val ox = outlineWidth * scaleX * 0.8f
-                            val oy = outlineWidth * scaleY * 0.8f
+                            val ox = outlineWidth * scaleX
+                            val oy = outlineWidth * scaleY
+                            val dOx = ox * 0.75f
+                            val dOy = oy * 0.75f
                             val offsets = arrayOf(
                                 Offset(-ox, 0f), Offset(ox, 0f),
                                 Offset(0f, -oy), Offset(0f, oy),
-                                Offset(-ox, -oy), Offset(ox, -oy),
-                                Offset(-ox, oy), Offset(ox, oy)
+                                Offset(-dOx, -dOy), Offset(dOx, -dOy),
+                                Offset(-dOx, dOy), Offset(dOx, dOy)
                             )
                             for (off in offsets) {
                                 drawImage(

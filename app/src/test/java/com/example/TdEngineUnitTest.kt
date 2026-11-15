@@ -209,6 +209,11 @@ class TdEngineUnitTest {
         val layout = SampLayoutMath.computeLayout(el, fontsDat = null)
         assertEquals(1, layout.wrappedLines.size)
         assertEquals("100km", layout.wrappedLines.first().plainText)
+
+        val expectedWidth = "100km".sumOf { ch ->
+            SampLayoutMath.charAdvanceVirtual(ch, el, fontsDat = null).toDouble()
+        }.toFloat()
+        assertEquals(expectedWidth, SampLayoutMath.measureTextWidthVirtual("100km", el, fontsDat = null), 0.01f)
     }
 
     @Test

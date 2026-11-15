@@ -36,7 +36,8 @@ object SampLayoutMath {
     private const val BOX_MARGIN_HORIZONTAL = 4f
     private const val BOX_MARGIN_TOP = 1.5f
     private const val BOX_MARGIN_BOTTOM = 2.5f
-    private const val FONT_SCALE_X_FACTOR = 1.0f
+    const val FONT_SCALE_X_FACTOR = 1.35f
+    const val GLYPH_HEIGHT_LINE_RATIO = 0.95f
     private const val FONT_SCALE_Y_FACTOR = 11.2f
     private const val DEFAULT_CHAR_ADVANCE = 15f
 
@@ -49,19 +50,27 @@ object SampLayoutMath {
 
     fun roundToThousandth(value: Float): Float = round(value * 1000f) / 1000f
 
+    fun charAdvanceVirtual(
+        ch: Char,
+        element: TextDrawElement,
+        fontsDat: FontsDatData?
+    ): Float {
+        val table = fontsDat?.tableForSampFont(element.font.value)
+        val scaleX = element.letterSizeX.coerceAtLeast(0.05f) * FONT_SCALE_X_FACTOR
+        val rawAdvance = table?.charAdvance(ch, element.font.value, element.proportional)?.toFloat()
+            ?: estimateFallbackAdvance(ch, element.font, element.proportional)
+        return rawAdvance * scaleX
+    }
+
     fun measureTextWidthVirtual(
         plainText: String,
         element: TextDrawElement,
         fontsDat: FontsDatData?
     ): Float {
         if (plainText.isEmpty()) return 0f
-        val table = fontsDat?.tableForSampFont(element.font.value)
-        val scaleX = element.letterSizeX.coerceAtLeast(0.05f) * FONT_SCALE_X_FACTOR
         var total = 0f
         for (ch in plainText) {
-            val advance = table?.charAdvance(ch, element.font.value, element.proportional)?.toFloat()
-                ?: estimateFallbackAdvance(ch, element.font, element.proportional)
-            total += advance * scaleX
+            total += charAdvanceVirtual(ch, element, fontsDat)
         }
         return total
     }
