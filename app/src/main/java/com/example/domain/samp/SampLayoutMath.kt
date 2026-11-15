@@ -59,20 +59,20 @@ object SampLayoutMath {
         val scaleX = element.letterSizeX.coerceAtLeast(0.05f) * FONT_SCALE_X_FACTOR
         var total = 0f
         for (ch in plainText) {
-            val code = ch.code
-            val advance = table?.charAdvance(code, element.proportional)?.toFloat()
-                ?: estimateFallbackAdvance(ch, element.proportional)
+            val advance = table?.charAdvance(ch, element.font.value, element.proportional)?.toFloat()
+                ?: estimateFallbackAdvance(ch, element.font, element.proportional)
             total += advance * scaleX
         }
         return total
     }
 
-    private fun estimateFallbackAdvance(ch: Char, proportional: Boolean): Float {
-        if (!proportional) return 16f
-        return when (ch) {
-            ' ', 'i', 'l', '!', '|', '.', ',', ':', ';', '\'' -> 8f
-            'I', 'j', 't', 'f', 'r' -> 10f
-            'm', 'M', 'w', 'W' -> 20f
+    private fun estimateFallbackAdvance(ch: Char, font: TdFont, proportional: Boolean): Float {
+        if (!proportional) return 20f
+        val effective = if (font == TdFont.FONT_2 || font == TdFont.FONT_3) ch.uppercaseChar() else ch
+        return when (effective) {
+            ' ', 'i', 'l', '!', '|', '.', ',', ':', ';', '\'' -> 10f
+            'I', 'j', 't', 'f', 'r' -> 12f
+            'm', 'M', 'w', 'W' -> 26f
             else -> DEFAULT_CHAR_ADVANCE
         }
     }

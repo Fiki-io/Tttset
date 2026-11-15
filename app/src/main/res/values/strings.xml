@@ -85,8 +85,8 @@
     <string name="field_font">Font</string>
     <string name="font_0_diploma">0 - Diploma / Gothic</string>
     <string name="font_1_futura">1 - Futura / Normal</string>
-    <string name="font_2_pricedown">2 - Pricedown / Judul</string>
-    <string name="font_3_bankgothic">3 - Bank Gothic / Menu</string>
+    <string name="font_2_pricedown">2 - Slim / Bank Gothic</string>
+    <string name="font_3_bankgothic">3 - Pricedown / Judul</string>
     <string name="font_4_sprite">4 - Sprite (TXD)</string>
     <string name="font_5_model">5 - Model Preview</string>
     <string name="action_pick_sprite">Pilih Sprite dari TXD</string>

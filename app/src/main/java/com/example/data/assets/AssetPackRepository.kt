@@ -202,11 +202,15 @@ class AssetPackRepository(private val context: Context) {
         val loadedAtlas = fontsTxdFile?.let { file ->
             runCatching {
                 val textures = TxdParser.decodeAll(file.readBytes())
-                val f1 = textures.firstOrNull { it.name.equals("font1", ignoreCase = true) } ?: textures.getOrNull(0)
-                val f2 = textures.firstOrNull { it.name.equals("font2", ignoreCase = true) } ?: textures.getOrNull(1)
+                val nonMasks = textures.filterNot { tex ->
+                    tex.name.endsWith("m", ignoreCase = true) &&
+                        textures.any { base -> base.name.equals(tex.name.dropLast(1), ignoreCase = true) }
+                }
+                val f1 = textures.firstOrNull { it.name.equals("font1", ignoreCase = true) } ?: nonMasks.getOrNull(0)
+                val f2 = textures.firstOrNull { it.name.equals("font2", ignoreCase = true) } ?: nonMasks.getOrNull(1)
                 LoadedFontAtlas(
-                    font1Bitmap = f1?.toAndroidBitmap(),
-                    font2Bitmap = f2?.toAndroidBitmap()
+                    font1Bitmap = f1?.let { applyOptionalMask(it, textures).toAndroidBitmap() },
+                    font2Bitmap = f2?.let { applyOptionalMask(it, textures).toAndroidBitmap() }
                 )
             }.getOrNull()
         }
@@ -267,6 +271,31 @@ class AssetPackRepository(private val context: Context) {
         val bmp = decoded.toAndroidBitmap()
         spriteBitmapCache.put(key, bmp)
         bmp
+    }
+
+    private fun applyOptionalMask(
+        base: DecodedTxdTexture,
+        allTextures: List<DecodedTxdTexture>
+    ): DecodedTxdTexture {
+        val hasAlphaVariation = base.argbPixels.any { (it ushr 24) and 0xFF < 0xFF }
+        if (hasAlphaVariation) return base
+
+        val maskName = base.maskName.ifBlank { "${base.name}m" }
+        val mask = allTextures.firstOrNull { it.name.equals(maskName, ignoreCase = true) }
+            ?: return base
+        if (mask.width != base.width || mask.height != base.height) return base
+
+        val merged = IntArray(base.argbPixels.size)
+        for (i in merged.indices) {
+            val rgb = base.argbPixels[i] and 0x00FFFFFF
+            val m = mask.argbPixels[i]
+            val r = (m ushr 16) and 0xFF
+            val g = (m ushr 8) and 0xFF
+            val b = m and 0xFF
+            val alpha = (r + g + b) / 3
+            merged[i] = (alpha shl 24) or rgb
+        }
+        return base.copy(argbPixels = merged)
     }
 
     private fun DecodedTxdTexture.toAndroidBitmap(): Bitmap {

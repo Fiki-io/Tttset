@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.core.AppConstants
 import com.example.domain.assets.FontsDatData
+import com.example.domain.assets.SampFontAtlasLayout
 import com.example.domain.model.CanvasAspectRatio
 import com.example.domain.model.TdAlignment
 import com.example.domain.model.TdFont
@@ -409,9 +410,12 @@ private fun DrawScope.drawTextDrawElement(
     }
 
     // 4. Text Fonts 0..3
-    val selectedAtlas = when (element.font) {
-        TdFont.FONT_0, TdFont.FONT_2 -> fontAtlas1 ?: fontAtlas2
-        else -> fontAtlas2 ?: fontAtlas1
+    // Sprite[0] = font2 (FONT_0 Gothic/Diploma & FONT_2 Slim/Menu)
+    // Sprite[1] = font1 (FONT_1 Normal/Subtitles & FONT_3 Pricedown)
+    val selectedAtlas = if (SampFontAtlasLayout.usesFont1Sheet(element.font.value)) {
+        fontAtlas1 ?: fontAtlas2
+    } else {
+        fontAtlas2 ?: fontAtlas1
     }
 
     if (selectedAtlas != null) {
@@ -442,9 +446,7 @@ private fun DrawScope.drawBitmapAtlasText(
     scaleX: Float,
     scaleY: Float
 ) {
-    val cellW = atlas.width / 16
-    val cellH = atlas.height / 16
-    if (cellW <= 0 || cellH <= 0) return
+    if (atlas.width < 16 || atlas.height < 16) return
 
     val fontTable = fontsDat?.tableForSampFont(element.font.value)
     val charHeightPx = layout.lineHeightVirtual * scaleY * 1.25f
@@ -463,19 +465,21 @@ private fun DrawScope.drawBitmapAtlasText(
 
         for (run in line.runs) {
             for (ch in run.text) {
-                val code = ch.code
-                val advanceVirtual = (fontTable?.charAdvance(code, element.proportional)?.toFloat()
+                val advanceVirtual = (fontTable?.charAdvance(ch, element.font.value, element.proportional)?.toFloat()
                     ?: 15f) * element.letterSizeX.coerceAtLeast(0.05f)
 
-                if (code >= 32 && code < 256) {
-                    val cellIdx = code - 32
-                    val col = cellIdx % 16
-                    val row = cellIdx / 16
-                    if (row < 16) {
-                        val srcX = col * cellW
-                        val srcY = row * cellH
+                if (ch != ' ') {
+                    val cellIdx = SampFontAtlasLayout.resolveAtlasIndex(ch, element.font.value)
+                    val slice = SampFontAtlasLayout.computeGlyphSlice(atlas.width, atlas.height, cellIdx)
+                    if (slice != null) {
                         val dstX = cursorX * scaleX
                         val glyphDrawW = (32.0f * glyphWidthScale).coerceAtLeast(2f)
+                        val dstSize = IntSize(
+                            glyphDrawW.roundToInt().coerceAtLeast(1),
+                            charHeightPx.roundToInt().coerceAtLeast(1)
+                        )
+                        val srcOffset = IntOffset(slice.srcX, slice.srcY)
+                        val srcSize = IntSize(slice.width, slice.height)
 
                         // Shadow
                         if (shadowShift > 0) {
@@ -483,10 +487,10 @@ private fun DrawScope.drawBitmapAtlasText(
                             val sy = lineTopPx + shadowShift * scaleY
                             drawImage(
                                 image = atlas,
-                                srcOffset = IntOffset(srcX, srcY),
-                                srcSize = IntSize(cellW, cellH),
+                                srcOffset = srcOffset,
+                                srcSize = srcSize,
                                 dstOffset = IntOffset(sx.roundToInt(), sy.roundToInt()),
-                                dstSize = IntSize(glyphDrawW.roundToInt().coerceAtLeast(1), charHeightPx.roundToInt().coerceAtLeast(1)),
+                                dstSize = dstSize,
                                 colorFilter = ColorFilter.tint(bgColor, BlendMode.Modulate)
                             )
                         }
@@ -497,15 +501,17 @@ private fun DrawScope.drawBitmapAtlasText(
                             val oy = outlineWidth * scaleY * 0.8f
                             val offsets = arrayOf(
                                 Offset(-ox, 0f), Offset(ox, 0f),
-                                Offset(0f, -oy), Offset(0f, oy)
+                                Offset(0f, -oy), Offset(0f, oy),
+                                Offset(-ox, -oy), Offset(ox, -oy),
+                                Offset(-ox, oy), Offset(ox, oy)
                             )
                             for (off in offsets) {
                                 drawImage(
                                     image = atlas,
-                                    srcOffset = IntOffset(srcX, srcY),
-                                    srcSize = IntSize(cellW, cellH),
+                                    srcOffset = srcOffset,
+                                    srcSize = srcSize,
                                     dstOffset = IntOffset((dstX + off.x).roundToInt(), (lineTopPx + off.y).roundToInt()),
-                                    dstSize = IntSize(glyphDrawW.roundToInt().coerceAtLeast(1), charHeightPx.roundToInt().coerceAtLeast(1)),
+                                    dstSize = dstSize,
                                     colorFilter = ColorFilter.tint(bgColor, BlendMode.Modulate)
                                 )
                             }
@@ -514,10 +520,10 @@ private fun DrawScope.drawBitmapAtlasText(
                         // Foreground glyph
                         drawImage(
                             image = atlas,
-                            srcOffset = IntOffset(srcX, srcY),
-                            srcSize = IntSize(cellW, cellH),
+                            srcOffset = srcOffset,
+                            srcSize = srcSize,
                             dstOffset = IntOffset(dstX.roundToInt(), lineTopPx.roundToInt()),
-                            dstSize = IntSize(glyphDrawW.roundToInt().coerceAtLeast(1), charHeightPx.roundToInt().coerceAtLeast(1)),
+                            dstSize = dstSize,
                             colorFilter = ColorFilter.tint(run.color, BlendMode.Modulate)
                         )
                     }

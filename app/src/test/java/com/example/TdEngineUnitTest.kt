@@ -1,6 +1,7 @@
 package com.example
 
 import com.example.domain.assets.FontsDatParser
+import com.example.domain.assets.SampFontAtlasLayout
 import com.example.domain.assets.TxdParser
 import com.example.domain.model.PawnSyntaxMode
 import com.example.domain.model.TdAlignment
@@ -97,15 +98,24 @@ class TdEngineUnitTest {
     }
 
     @Test
-    fun fontsDatParser_readsPropAndUnpropTables() {
+    fun fontsDatParser_readsPropUnpropAndSubFontTables() {
+        val propValues = IntArray(181) { 20 }
+        propValues[0] = 12 // space
+        propValues[3] = 18
+        propValues[144] = 27 // subfont '0'
+        propValues[154] = 18 // subfont ':'
+        propValues[155] = 29 // subfont 'A'
+        val table0PropLine = propValues.joinToString(" ")
         val sample = """
             # GTA SA fonts.dat sample
             [FONT_ID]
             0
             [PROP]
-            12 14 16 18 20 22 24 26
+            $table0PropLine
             [UNPROP]
             19
+            [REPLACEMENT_SPACE_CHAR]
+            10
             [FONT_ID]
             1
             [PROP]
@@ -117,11 +127,52 @@ class TdEngineUnitTest {
         val parsed = FontsDatParser.parse(sample)
         val font0 = parsed.tableForSampFont(0)
         val font1 = parsed.tableForSampFont(1)
+        val font2 = parsed.tableForSampFont(2)
+        val font3 = parsed.tableForSampFont(3)
         assertNotNull(font0)
         assertNotNull(font1)
-        assertEquals(12, font0!!.charAdvance(32, proportional = true))
+        assertEquals(0, font0!!.fontIndex)
+        assertEquals(1, font1!!.fontIndex)
+        assertEquals(0, font2!!.fontIndex)
+        assertEquals(1, font3!!.fontIndex)
+        assertEquals(10, font0.charAdvance(' ', 0, proportional = true))
         assertEquals(19, font0.charAdvance(32, proportional = false))
-        assertEquals(13, font1!!.charAdvance(35, proportional = true))
+        assertEquals(27, font2.charAdvance('0', 2, proportional = true))
+        assertEquals(18, font2.charAdvance(':', 2, proportional = true))
+        assertEquals(29, font2.charAdvance('a', 2, proportional = true))
+        assertEquals(13, font1.charAdvance(35, proportional = true))
+    }
+
+    @Test
+    fun sampFontAtlasLayout_uses40pxRowPitchAndCorrectSheetAndSubfontIndices() {
+        assertEquals(false, SampFontAtlasLayout.usesFont1Sheet(0))
+        assertEquals(true, SampFontAtlasLayout.usesFont1Sheet(1))
+        assertEquals(false, SampFontAtlasLayout.usesFont1Sheet(2))
+        assertEquals(true, SampFontAtlasLayout.usesFont1Sheet(3))
+
+        // Primary font 'r' -> cellIdx 82 (row 5, col 2) -> srcX = 64, srcY = 5 * 40 = 200 on 512x512
+        val rIdx = SampFontAtlasLayout.resolveAtlasIndex('r', sampFontId = 1)
+        assertEquals(82, rIdx)
+        val rSlice = SampFontAtlasLayout.computeGlyphSlice(512, 512, rIdx)
+        assertNotNull(rSlice)
+        assertEquals(64, rSlice!!.srcX)
+        assertEquals(200, rSlice.srcY)
+        assertEquals(32, rSlice.width)
+        assertEquals(40, rSlice.height)
+
+        // Subfont FONT_3 '0' -> cellIdx 144 (row 9, col 0) -> srcY = 360 on 512x512
+        val zeroIdx = SampFontAtlasLayout.resolveAtlasIndex('0', sampFontId = 3)
+        assertEquals(144, zeroIdx)
+        val zeroSlice = SampFontAtlasLayout.computeGlyphSlice(512, 512, zeroIdx)!!
+        assertEquals(0, zeroSlice.srcX)
+        assertEquals(360, zeroSlice.srcY)
+        assertEquals(32, zeroSlice.width)
+        assertEquals(40, zeroSlice.height)
+
+        // Subfont lowercase 'a' folds to 'A' (155) -> row 9, col 11 -> srcX = 352, srcY = 360
+        assertEquals(155, SampFontAtlasLayout.resolveAtlasIndex('a', sampFontId = 3))
+        assertEquals(155, SampFontAtlasLayout.resolveAtlasIndex('A', sampFontId = 2))
+        assertEquals(180, SampFontAtlasLayout.resolveAtlasIndex('z', sampFontId = 2))
     }
 
     @Test
