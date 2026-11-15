@@ -1,0 +1,168 @@
+<resources>
+    <string name="app_name">TD Studio</string>
+
+    <!-- Bilah Atas Studio -->
+    <string name="cd_project_menu">Buka daftar project</string>
+    <string name="cd_undo">Batalkan perubahan terakhir</string>
+    <string name="cd_redo">Ulangi perubahan</string>
+    <string name="cd_toggle_grid">Tampilkan atau sembunyikan garis grid</string>
+    <string name="cd_toggle_snap">Aktifkan atau matikan tempel ke grid</string>
+    <string name="cd_toggle_layers">Buka atau tutup panel layer</string>
+    <string name="cd_toggle_inspector">Buka atau tutup panel properti</string>
+    <string name="cd_close_dialog">Tutup dialog</string>
+    <string name="action_import_assets">Muat assets.zip</string>
+    <string name="action_reload_assets">Ganti assets.zip</string>
+    <string name="action_import_pawn">Import</string>
+    <string name="action_export_pawn">Export</string>
+    <string name="action_copy_code">Salin Kode</string>
+    <string name="action_save">Simpan</string>
+    <string name="action_cancel">Batal</string>
+    <string name="action_apply">Terapkan</string>
+    <string name="action_delete">Hapus</string>
+    <string name="action_duplicate">Duplikat</string>
+    <string name="action_rename">Ganti Nama</string>
+    <string name="action_create_project">Project Baru</string>
+    <string name="action_open">Buka</string>
+
+    <!-- Status Aset -->
+    <string name="assets_not_loaded">Aset belum dimuat</string>
+    <string name="assets_loading">Memuat aset…</string>
+    <string name="assets_loaded_summary">%1$d TXD, %2$d sprite</string>
+    <string name="assets_loaded_with_fonts">%1$d TXD, %2$d sprite, Font siap</string>
+    <string name="assets_error_prefix">Gagal memuat aset: %1$s</string>
+    <string name="assets_banner_prompt">Muat file assets.zip agar font dan sprite asli GTA SA tampil di kanvas.</string>
+    <string name="assets_error_empty_zip">Arsip zip tidak berisi file fonts.dat atau .txd yang valid.</string>
+    <string name="assets_error_bundled_empty">File assets/assets.zip di APK masih kosong (0 byte). Unggah file assets.zip asli atau muat dari penyimpanan HP.</string>
+    <string name="assets_error_read_stream">Stream file tidak dapat dibaca.</string>
+    <string name="assets_info_title">Status Aset GTA SA</string>
+    <string name="assets_info_source">Sumber aktif: %1$s</string>
+    <string name="assets_info_fonts_dat">fonts.dat: %1$s</string>
+    <string name="assets_info_fonts_txd">fonts.txd: %1$s</string>
+    <string name="assets_info_txd_count">Arsip TXD terindeks: %1$d</string>
+    <string name="assets_info_sprite_count">Total sprite terindeks: %1$d</string>
+    <string name="status_present">Terbaca</string>
+    <string name="status_missing">Tidak ditemukan</string>
+
+    <!-- Rasio & Kanvas -->
+    <string name="ratio_4_3">4:3</string>
+    <string name="ratio_16_9">16:9</string>
+    <string name="canvas_coord_readout">X: %1$.1f  Y: %2$.1f  W: %3$.1f  H: %4$.1f</string>
+    <string name="canvas_empty_hint">Tambahkan elemen dari panel Layer atau Import kode Pawn untuk mulai mendesain.</string>
+    <string name="canvas_font5_label">Model #%1$d</string>
+    <string name="canvas_sprite_missing">Sprite: %1$s</string>
+    <string name="nudge_step_label">Geser %1$.1f</string>
+    <string name="cd_nudge_up">Geser ke atas</string>
+    <string name="cd_nudge_down">Geser ke bawah</string>
+    <string name="cd_nudge_left">Geser ke kiri</string>
+    <string name="cd_nudge_right">Geser ke kanan</string>
+
+    <!-- Panel Layer -->
+    <string name="panel_layers_title">Layer</string>
+    <string name="add_text">Teks</string>
+    <string name="add_box">Box</string>
+    <string name="add_sprite">Sprite</string>
+    <string name="add_model">Model</string>
+    <string name="layer_badge_player">Player</string>
+    <string name="layer_badge_global">Global</string>
+    <string name="layers_empty">Belum ada elemen TextDraw.</string>
+    <string name="cd_layer_visibility">Ubah visibilitas layer</string>
+    <string name="cd_layer_lock">Kunci atau buka kunci layer</string>
+    <string name="cd_layer_up">Naikkan urutan layer</string>
+    <string name="cd_layer_down">Turunkan urutan layer</string>
+    <string name="cd_layer_duplicate">Duplikat layer</string>
+    <string name="cd_layer_delete">Hapus layer</string>
+
+    <!-- Panel Inspektor -->
+    <string name="panel_inspector_title">Properti</string>
+    <string name="inspector_no_selection">Pilih salah satu elemen di kanvas atau daftar Layer untuk mengubah propertinya.</string>
+    <string name="field_var_name">Nama Variabel</string>
+    <string name="field_type_scope">Tipe TextDraw</string>
+    <string name="scope_global">Global (Text:)</string>
+    <string name="scope_player">Player (PlayerText:)</string>
+    <string name="field_text_content">Teks / Sprite</string>
+    <string name="section_color_tags">Sisip Tag Warna</string>
+    <string name="field_font">Font</string>
+    <string name="font_0_diploma">0 - Diploma / Gothic</string>
+    <string name="font_1_futura">1 - Futura / Normal</string>
+    <string name="font_2_pricedown">2 - Pricedown / Judul</string>
+    <string name="font_3_bankgothic">3 - Bank Gothic / Menu</string>
+    <string name="font_4_sprite">4 - Sprite (TXD)</string>
+    <string name="font_5_model">5 - Model Preview</string>
+    <string name="action_pick_sprite">Pilih Sprite dari TXD</string>
+    <string name="field_alignment">Perataan (Alignment)</string>
+    <string name="align_left">Kiri (1)</string>
+    <string name="align_center">Tengah (2)</string>
+    <string name="align_right">Kanan (3)</string>
+    <string name="section_position">Posisi (640x480)</string>
+    <string name="label_pos_x">Pos X</string>
+    <string name="label_pos_y">Pos Y</string>
+    <string name="section_letter_size">Ukuran Huruf (LetterSize)</string>
+    <string name="label_letter_x">Letter X</string>
+    <string name="label_letter_y">Letter Y</string>
+    <string name="section_text_size">Ukuran / Batas (TextSize)</string>
+    <string name="label_text_x">TextSize X</string>
+    <string name="label_text_y">TextSize Y</string>
+    <string name="hint_center_textsize">Catatan SA-MP: Pada rata tengah, TextSize X berfungsi sebagai tinggi dan TextSize Y sebagai lebar kotak.</string>
+    <string name="section_style">Gaya &amp; Interaksi</string>
+    <string name="toggle_use_box">Gunakan Box (UseBox)</string>
+    <string name="toggle_proportional">Proporsional</string>
+    <string name="toggle_selectable">Bisa Diklik (Selectable)</string>
+    <string name="label_outline">Outline</string>
+    <string name="label_shadow">Shadow</string>
+    <string name="section_colors">Warna (0xRRGGBBAA)</string>
+    <string name="color_text">Warna Teks</string>
+    <string name="color_box">Warna Box</string>
+    <string name="color_background">Warna Outline/Latar</string>
+    <string name="section_model_preview">Parameter Model Preview</string>
+    <string name="label_model_id">Model ID</string>
+    <string name="label_rot_x">Rotasi X</string>
+    <string name="label_rot_y">Rotasi Y</string>
+    <string name="label_rot_z">Rotasi Z</string>
+    <string name="label_zoom">Zoom</string>
+    <string name="label_veh_col1">VehCol 1</string>
+    <string name="label_veh_col2">VehCol 2</string>
+
+    <!-- Pemilih Warna -->
+    <string name="color_picker_title">Atur %1$s</string>
+    <string name="label_hex_rgba">Hex RGBA (0xRRGGBBAA)</string>
+    <string name="label_channel_r">Merah (R)</string>
+    <string name="label_channel_g">Hijau (G)</string>
+    <string name="label_channel_b">Biru (B)</string>
+    <string name="label_channel_a">Transparansi (A)</string>
+    <string name="error_invalid_hex">Format harus 8 digit hex, contoh 0xFFFFFFFF</string>
+
+    <!-- Pemilih Sprite -->
+    <string name="sprite_picker_title">Pilih Sprite TXD</string>
+    <string name="sprite_search_hint">Cari nama txd atau sprite…</string>
+    <string name="sprite_filter_all">Semua TXD</string>
+    <string name="sprite_picker_empty_assets">Belum ada sprite TXD yang dimuat. Muat assets.zip terlebih dahulu.</string>
+    <string name="sprite_picker_no_match">Tidak ada sprite yang cocok dengan pencarian.</string>
+
+    <!-- Import & Export Pawn -->
+    <string name="import_dialog_title">Import Kode Pawn</string>
+    <string name="import_dialog_hint">Tempel kode TextDraw atau PlayerTextDraw (a_samp atau open.mp) di sini…</string>
+    <string name="import_mode_replace">Ganti kanvas</string>
+    <string name="import_mode_append">Tambahkan ke kanvas</string>
+    <string name="action_process_import">Muat ke Kanvas</string>
+    <string name="import_error_empty">Tempelkan kode Pawn terlebih dahulu.</string>
+    <string name="import_error_none_found">Tidak ditemukan deklarasi TextDrawCreate atau CreatePlayerTextDraw yang valid.</string>
+    <string name="import_success_summary">Berhasil mengimpor %1$d elemen TextDraw.</string>
+
+    <string name="export_dialog_title">Export Kode Pawn</string>
+    <string name="syntax_samp_classic">a_samp Klasik</string>
+    <string name="syntax_open_mp">open.mp</string>
+    <string name="export_include_show">Sertakan fungsi Show</string>
+    <string name="export_copied_message">Kode Pawn berhasil disalin ke papan klip.</string>
+    <string name="export_empty_notice">Belum ada elemen di kanvas untuk diekspor.</string>
+
+    <!-- Manajemen Project -->
+    <string name="projects_dialog_title">Daftar Project</string>
+    <string name="project_default_name">Project Baru</string>
+    <string name="project_name_hint">Nama project</string>
+    <string name="project_delete_confirm_title">Hapus Project?</string>
+    <string name="project_delete_confirm_body">Project \"%1$s\" beserta seluruh elemen TextDraw di dalamnya akan dihapus permanen.</string>
+    <string name="project_meta_format">%1$d elemen • %2$s</string>
+    <string name="project_cannot_delete_last">Sisakan minimal satu project aktif.</string>
+    <string name="cd_stepper_decrease">Kurangi nilai</string>
+    <string name="cd_stepper_increase">Tambah nilai</string>
+</resources>

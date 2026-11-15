@@ -1,0 +1,6 @@
+{
+  "name": "TD Studio",
+  "description": "Editor TextDraw SA-MP dan open.mp berbasis kanvas 640x480 dengan dukungan pembacaan aset GTA SA, import dan export kode Pawn.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
