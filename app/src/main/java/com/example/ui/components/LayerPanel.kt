@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Lock
@@ -44,6 +45,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,23 +70,56 @@ fun LayerPanel(
     onMoveLayer: (Long, Int) -> Unit,
     onDuplicate: (Long) -> Unit,
     onDelete: (Long) -> Unit,
+    onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val shape = RoundedCornerShape(AppDimens.RadiusMedium)
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .background(AppColors.SurfaceBase)
-            .border(AppDimens.BorderThin, AppColors.BorderSubtle)
+            .clip(shape)
+            .background(AppColors.SurfaceBase.copy(alpha = 0.94f))
+            .border(AppDimens.BorderThin, AppColors.BorderInteractive, shape)
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Main)
+                        event.changes.forEach { if (!it.isConsumed) it.consume() }
+                    }
+                }
+            }
             .padding(AppDimens.Space8)
     ) {
-        Text(
-            text = stringResource(R.string.panel_layers_title),
-            style = MaterialTheme.typography.titleSmall,
-            color = AppColors.TextPrimary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(horizontal = AppDimens.Space4, vertical = AppDimens.Space4)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = AppDimens.Space4),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = stringResource(R.string.panel_layers_title),
+                style = MaterialTheme.typography.titleSmall,
+                color = AppColors.TextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(
+                onClick = onClose,
+                modifier = Modifier
+                    .size(32.dp)
+                    .testTag("close_layers_button")
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.cd_close_panel),
+                    tint = AppColors.TextSecondary,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(AppDimens.Space4))
 
         FlowRow(
             modifier = Modifier.fillMaxWidth(),

@@ -5,7 +5,10 @@ import android.content.ClipboardManager
 import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,13 +20,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -88,6 +93,8 @@ import com.example.ui.components.RgbaColorPickerDialog
 import com.example.ui.components.SpritePickerDialog
 import com.example.ui.theme.AppColors
 import com.example.ui.theme.AppDimens
+import com.example.ui.theme.AppMotion
+import com.example.ui.theme.rememberReducedMotionEnabled
 import com.example.ui.viewmodel.EditorViewModel
 import com.example.ui.viewmodel.UiNotice
 import kotlinx.coroutines.launch
@@ -100,15 +107,20 @@ fun StudioScreen(
     val projects by viewModel.projectSummaries.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val reducedMotion = rememberReducedMotionEnabled()
 
-    var showLayersPanel by remember { mutableStateOf(true) }
-    var showInspectorPanel by remember { mutableStateOf(true) }
+    var showLayersPanel by remember { mutableStateOf(false) }
+    var showInspectorPanel by remember { mutableStateOf(false) }
     var showProjectsDialog by remember { mutableStateOf(false) }
     var showImportDialog by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
     var showSpritePickerDialog by remember { mutableStateOf(false) }
     var showAssetStatusDialog by remember { mutableStateOf(false) }
     var activeColorField by remember { mutableStateOf<ColorTargetField?>(null) }
+
+    LaunchedEffect(uiState.selectedElementId) {
+        showInspectorPanel = uiState.selectedElementId != null
+    }
 
     val zipPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -131,7 +143,7 @@ fun StudioScreen(
 
     Scaffold(
         containerColor = AppColors.BackgroundBottom,
-        contentWindowInsets = WindowInsets.safeDrawing,
+        contentWindowInsets = WindowInsets(0),
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
         Box(
@@ -153,7 +165,8 @@ fun StudioScreen(
                     canUndo = uiState.canUndo,
                     canRedo = uiState.canRedo,
                     showLayers = showLayersPanel,
-                    showInspector = showInspectorPanel,
+                    showInspector = showInspectorPanel && uiState.selectedElement != null,
+                    hasSelection = uiState.selectedElement != null,
                     assetStatus = uiState.assetStatus,
                     onOpenProjects = { showProjectsDialog = true },
                     onOpenAssetDialog = { showAssetStatusDialog = true },
@@ -163,117 +176,157 @@ fun StudioScreen(
                     onUndo = viewModel::undo,
                     onRedo = viewModel::redo,
                     onToggleLayers = { showLayersPanel = !showLayersPanel },
-                    onToggleInspector = { showInspectorPanel = !showInspectorPanel },
+                    onToggleInspector = {
+                        if (uiState.selectedElement != null) {
+                            showInspectorPanel = !showInspectorPanel
+                        }
+                    },
                     onOpenImport = { showImportDialog = true },
                     onOpenExport = { showExportDialog = true }
                 )
 
                 BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                    val isNarrow = maxWidth < 760.dp
+                    val isNarrow = maxWidth < 840.dp
                     val layerWidth = if (isNarrow) AppDimens.CompactRailWidth else AppDimens.LayerRailWidth
                     val inspectorWidth = if (isNarrow) AppDimens.CompactInspectorWidth else AppDimens.InspectorWidth
 
-                    Row(modifier = Modifier.fillMaxSize()) {
-                        AnimatedVisibility(visible = showLayersPanel) {
+                    // Patented full-size canvas editor (never pinched by Layer or Properti)
+                    SampCanvasViewport(
+                        elements = uiState.currentProject?.elements.orEmpty(),
+                        selectedElementId = uiState.selectedElementId,
+                        aspectRatio = uiState.currentProject?.aspectRatio ?: CanvasAspectRatio.RATIO_16_9,
+                        showGrid = uiState.showGrid,
+                        loadedSprites = uiState.loadedSprites,
+                        fontAtlas1 = uiState.fontAtlas1,
+                        fontAtlas2 = uiState.fontAtlas2,
+                        fontsDat = uiState.fontsDat,
+                        onSelectElement = { id ->
+                            viewModel.selectElement(id)
+                            if (id != null) {
+                                showInspectorPanel = true
+                            }
+                        },
+                        onBeginGesture = viewModel::beginCanvasGesture,
+                        onDragElement = viewModel::dragElementBy,
+                        onResizeElement = viewModel::resizeElementBy,
+                        onEndGesture = viewModel::endCanvasGesture,
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal))
+                    ) {
+                        if (uiState.assetStatus is AssetPackStatus.NotLoaded) {
+                            Row(
+                                modifier = Modifier
+                                    .align(Alignment.TopCenter)
+                                    .padding(AppDimens.Space8)
+                                    .clip(RoundedCornerShape(AppDimens.RadiusMedium))
+                                    .background(AppColors.SurfaceModal.copy(alpha = 0.92f))
+                                    .border(AppDimens.BorderThin, AppColors.BorderInteractive, RoundedCornerShape(AppDimens.RadiusMedium))
+                                    .clickable {
+                                        zipPickerLauncher.launch(
+                                            arrayOf(AppConstants.ZIP_MIME_TYPE, AppConstants.OCTET_STREAM_MIME_TYPE)
+                                        )
+                                    }
+                                    .testTag("banner_import_assets")
+                                    .padding(horizontal = AppDimens.Space12, vertical = AppDimens.Space6),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(AppDimens.Space8)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Archive,
+                                    contentDescription = null,
+                                    tint = AppColors.AccentBlue,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = stringResource(R.string.assets_banner_prompt),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = AppColors.TextPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false)
+                                )
+                                Text(
+                                    text = stringResource(R.string.action_import_assets),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = AppColors.AccentBlue
+                                )
+                            }
+                        }
+
+                        uiState.selectedElement?.let { selected ->
+                            CanvasBottomNudgeOverlay(
+                                element = selected,
+                                nudgeStep = uiState.nudgeStep,
+                                onCycleStep = viewModel::cycleNudgeStep,
+                                onNudge = viewModel::nudgeSelected,
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .padding(AppDimens.Space8)
+                            )
+                        }
+
+                        // Floating Layer Drawer (Start)
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = showLayersPanel,
+                            enter = fadeIn(AppMotion.standardTween(reducedMotion)) +
+                                slideInHorizontally(AppMotion.standardTween(reducedMotion)) { -it / 3 },
+                            exit = fadeOut(AppMotion.fastTween(reducedMotion)) +
+                                slideOutHorizontally(AppMotion.fastTween(reducedMotion)) { -it / 3 },
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .padding(AppDimens.Space8)
+                        ) {
                             LayerPanel(
                                 elements = uiState.currentProject?.elements.orEmpty(),
                                 selectedElementId = uiState.selectedElementId,
-                                onSelectElement = viewModel::selectElement,
+                                onSelectElement = { id ->
+                                    viewModel.selectElement(id)
+                                    showInspectorPanel = true
+                                },
                                 onAddPreset = viewModel::addElement,
                                 onToggleVisibility = viewModel::toggleVisibility,
                                 onToggleLock = viewModel::toggleLock,
                                 onMoveLayer = viewModel::moveLayer,
                                 onDuplicate = viewModel::duplicateElement,
                                 onDelete = viewModel::deleteElement,
-                                modifier = Modifier.width(layerWidth)
+                                onClose = { showLayersPanel = false },
+                                modifier = Modifier
+                                    .width(layerWidth)
+                                    .fillMaxHeight()
                             )
                         }
 
-                        Box(
+                        // Floating Property Inspector Drawer (End, shown only when an element is selected)
+                        val selectedElement = uiState.selectedElement
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = showInspectorPanel && selectedElement != null,
+                            enter = fadeIn(AppMotion.standardTween(reducedMotion)) +
+                                slideInHorizontally(AppMotion.standardTween(reducedMotion)) { it / 3 },
+                            exit = fadeOut(AppMotion.fastTween(reducedMotion)) +
+                                slideOutHorizontally(AppMotion.fastTween(reducedMotion)) { it / 3 },
                             modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
+                                .align(Alignment.TopEnd)
+                                .padding(AppDimens.Space8)
                         ) {
-                            SampCanvasViewport(
-                                elements = uiState.currentProject?.elements.orEmpty(),
-                                selectedElementId = uiState.selectedElementId,
-                                aspectRatio = uiState.currentProject?.aspectRatio ?: CanvasAspectRatio.RATIO_16_9,
-                                showGrid = uiState.showGrid,
-                                loadedSprites = uiState.loadedSprites,
-                                fontAtlas1 = uiState.fontAtlas1,
-                                fontAtlas2 = uiState.fontAtlas2,
-                                fontsDat = uiState.fontsDat,
-                                onSelectElement = viewModel::selectElement,
-                                onBeginGesture = viewModel::beginCanvasGesture,
-                                onDragElement = viewModel::dragElementBy,
-                                onResizeElement = viewModel::resizeElementBy,
-                                onEndGesture = viewModel::endCanvasGesture,
-                                modifier = Modifier.fillMaxSize()
-                            )
-
-                            if (uiState.assetStatus is AssetPackStatus.NotLoaded) {
-                                Row(
+                            if (selectedElement != null) {
+                                InspectorPanel(
+                                    element = selectedElement,
+                                    onUpdate = { recordHistory, transform ->
+                                        viewModel.updateSelectedElement(recordHistory, transform)
+                                    },
+                                    onOpenColorPicker = { field -> activeColorField = field },
+                                    onOpenSpritePicker = { showSpritePickerDialog = true },
+                                    onClose = { showInspectorPanel = false },
                                     modifier = Modifier
-                                        .align(Alignment.TopCenter)
-                                        .padding(AppDimens.Space8)
-                                        .clip(RoundedCornerShape(AppDimens.RadiusMedium))
-                                        .background(AppColors.SurfaceModal.copy(alpha = 0.92f))
-                                        .border(AppDimens.BorderThin, AppColors.BorderInteractive, RoundedCornerShape(AppDimens.RadiusMedium))
-                                        .clickable {
-                                            zipPickerLauncher.launch(
-                                                arrayOf(AppConstants.ZIP_MIME_TYPE, AppConstants.OCTET_STREAM_MIME_TYPE)
-                                            )
-                                        }
-                                        .testTag("banner_import_assets")
-                                        .padding(horizontal = AppDimens.Space12, vertical = AppDimens.Space6),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(AppDimens.Space8)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Archive,
-                                        contentDescription = null,
-                                        tint = AppColors.AccentBlue,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.assets_banner_prompt),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = AppColors.TextPrimary,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.weight(1f, fill = false)
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.action_import_assets),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = AppColors.AccentBlue
-                                    )
-                                }
-                            }
-
-                            uiState.selectedElement?.let { selected ->
-                                CanvasBottomNudgeOverlay(
-                                    element = selected,
-                                    nudgeStep = uiState.nudgeStep,
-                                    onCycleStep = viewModel::cycleNudgeStep,
-                                    onNudge = viewModel::nudgeSelected,
-                                    modifier = Modifier
-                                        .align(Alignment.BottomCenter)
-                                        .padding(AppDimens.Space8)
+                                        .width(inspectorWidth)
+                                        .fillMaxHeight()
                                 )
                             }
-                        }
-
-                        AnimatedVisibility(visible = showInspectorPanel) {
-                            InspectorPanel(
-                                element = uiState.selectedElement,
-                                onUpdate = { recordHistory, transform ->
-                                    viewModel.updateSelectedElement(recordHistory, transform)
-                                },
-                                onOpenColorPicker = { field -> activeColorField = field },
-                                onOpenSpritePicker = { showSpritePickerDialog = true },
-                                modifier = Modifier.width(inspectorWidth)
-                            )
                         }
                     }
                 }
@@ -385,6 +438,7 @@ private fun TopStudioBar(
     canRedo: Boolean,
     showLayers: Boolean,
     showInspector: Boolean,
+    hasSelection: Boolean,
     assetStatus: AssetPackStatus,
     onOpenProjects: () -> Unit,
     onOpenAssetDialog: () -> Unit,
@@ -404,23 +458,24 @@ private fun TopStudioBar(
             .heightIn(min = AppDimens.TopBarHeight)
             .background(AppColors.SurfaceBase)
             .border(AppDimens.BorderThin, AppColors.BorderSubtle)
+            .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal))
             .padding(horizontal = AppDimens.Space8, vertical = AppDimens.Space4)
             .horizontalScroll(rememberScrollState()),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(AppDimens.Space6)
+        horizontalArrangement = Arrangement.spacedBy(AppDimens.Space4)
     ) {
         // Project Pill
         Row(
             modifier = Modifier
-                .heightIn(min = 40.dp)
+                .heightIn(min = 38.dp)
                 .clip(RoundedCornerShape(AppDimens.RadiusSmall))
                 .background(AppColors.SurfaceInteractive)
                 .border(AppDimens.BorderThin, AppColors.BorderSubtle, RoundedCornerShape(AppDimens.RadiusSmall))
                 .clickable(onClick = onOpenProjects)
                 .testTag("top_projects_button")
-                .padding(horizontal = AppDimens.Space12),
+                .padding(horizontal = AppDimens.Space8),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(AppDimens.Space6)
+            horizontalArrangement = Arrangement.spacedBy(AppDimens.Space4)
         ) {
             Icon(
                 imageVector = Icons.Filled.FolderOpen,
@@ -440,7 +495,7 @@ private fun TopStudioBar(
         // Asset Status Pill
         Row(
             modifier = Modifier
-                .heightIn(min = 40.dp)
+                .heightIn(min = 38.dp)
                 .clip(RoundedCornerShape(AppDimens.RadiusSmall))
                 .background(
                     if (assetStatus is AssetPackStatus.Loaded) AppColors.SurfaceCard else AppColors.AccentBlueSoft
@@ -452,9 +507,9 @@ private fun TopStudioBar(
                 )
                 .clickable(onClick = onOpenAssetDialog)
                 .testTag("top_assets_button")
-                .padding(horizontal = AppDimens.Space12),
+                .padding(horizontal = AppDimens.Space8),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(AppDimens.Space6)
+            horizontalArrangement = Arrangement.spacedBy(AppDimens.Space4)
         ) {
             if (assetStatus is AssetPackStatus.Loading) {
                 CircularProgressIndicator(
@@ -546,6 +601,7 @@ private fun TopStudioBar(
             icon = Icons.Filled.Tune,
             contentDescription = stringResource(R.string.cd_toggle_inspector),
             selected = showInspector,
+            enabled = hasSelection,
             onClick = onToggleInspector,
             testTag = "top_inspector_toggle"
         )
@@ -553,13 +609,13 @@ private fun TopStudioBar(
         // Import Pawn
         Row(
             modifier = Modifier
-                .heightIn(min = 40.dp)
+                .heightIn(min = 38.dp)
                 .clip(RoundedCornerShape(AppDimens.RadiusSmall))
                 .background(AppColors.SurfaceInteractive)
                 .border(AppDimens.BorderThin, AppColors.BorderInteractive, RoundedCornerShape(AppDimens.RadiusSmall))
                 .clickable(onClick = onOpenImport)
                 .testTag("top_import_pawn_button")
-                .padding(horizontal = AppDimens.Space12),
+                .padding(horizontal = AppDimens.Space8),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(AppDimens.Space4)
         ) {
@@ -570,12 +626,12 @@ private fun TopStudioBar(
         // Export Pawn
         Row(
             modifier = Modifier
-                .heightIn(min = 40.dp)
+                .heightIn(min = 38.dp)
                 .clip(RoundedCornerShape(AppDimens.RadiusSmall))
                 .background(AppColors.AccentBlue)
                 .clickable(onClick = onOpenExport)
                 .testTag("top_export_pawn_button")
-                .padding(horizontal = AppDimens.Space12),
+                .padding(horizontal = AppDimens.Space8),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(AppDimens.Space4)
         ) {
@@ -594,13 +650,13 @@ private fun TopChipButton(
 ) {
     Box(
         modifier = Modifier
-            .heightIn(min = 40.dp)
+            .heightIn(min = 38.dp)
             .clip(RoundedCornerShape(AppDimens.RadiusSmall))
             .background(if (selected) AppColors.SurfaceInteractive else AppColors.SurfaceCard)
             .border(AppDimens.BorderThin, AppColors.BorderSubtle, RoundedCornerShape(AppDimens.RadiusSmall))
             .clickable(onClick = onClick)
             .testTag(testTag)
-            .padding(horizontal = AppDimens.Space12),
+            .padding(horizontal = AppDimens.Space8),
         contentAlignment = Alignment.Center
     ) {
         Text(text = label, style = MaterialTheme.typography.labelMedium, color = AppColors.TextPrimary)
@@ -620,7 +676,7 @@ private fun TopIconChip(
         onClick = onClick,
         enabled = enabled,
         modifier = Modifier
-            .size(40.dp)
+            .size(38.dp)
             .clip(RoundedCornerShape(AppDimens.RadiusSmall))
             .background(if (selected) AppColors.AccentBlueSoft else AppColors.SurfaceInteractive)
             .border(

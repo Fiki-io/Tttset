@@ -145,6 +145,22 @@ class TdEngineUnitTest {
     }
 
     @Test
+    fun pawnImporter_withoutTextSize_doesNotWrapRightEdgeTextVertically() {
+        val code = """
+            new PlayerText:gSpeedText = INVALID_PLAYER_TEXT_DRAW;
+            gSpeedText = CreatePlayerTextDraw(playerid, 580.0, 420.0, "100km");
+            PlayerTextDrawFont(playerid, gSpeedText, 2);
+            PlayerTextDrawLetterSize(playerid, gSpeedText, 0.35, 1.8);
+        """.trimIndent()
+        val parsed = PawnImporter.parse(code).elements
+        assertEquals(1, parsed.size)
+        val el = parsed.first()
+        val layout = SampLayoutMath.computeLayout(el, fontsDat = null)
+        assertEquals(1, layout.wrappedLines.size)
+        assertEquals("100km", layout.wrappedLines.first().plainText)
+    }
+
+    @Test
     fun txdParser_decodesSyntheticBgra32AndPal8Chunks() {
         val bgraTxd = buildSyntheticTxd(
             name = "test_bgra",

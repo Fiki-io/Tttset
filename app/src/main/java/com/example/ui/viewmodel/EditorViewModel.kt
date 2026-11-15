@@ -166,7 +166,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         _uiState.update {
             it.copy(
                 currentProject = project,
-                selectedElementId = project.elements.lastOrNull()?.id,
+                selectedElementId = null,
                 canUndo = false,
                 canRedo = false
             )
@@ -594,7 +594,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         }
 
         val combined = if (replaceExisting) parsed.elements else project.elements + parsed.elements
-        commitElementListChange(combined, selectId = parsed.elements.last().id)
+        commitElementListChange(combined, selectId = null)
         preloadVisibleSprites()
         viewModelScope.launch {
             _notices.emit(UiNotice.Message(app.getString(R.string.import_success_summary, parsed.elements.size)))

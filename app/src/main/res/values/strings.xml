@@ -9,6 +9,7 @@
     <string name="cd_toggle_snap">Aktifkan atau matikan tempel ke grid</string>
     <string name="cd_toggle_layers">Buka atau tutup panel layer</string>
     <string name="cd_toggle_inspector">Buka atau tutup panel properti</string>
+    <string name="cd_close_panel">Tutup panel</string>
     <string name="cd_close_dialog">Tutup dialog</string>
     <string name="action_import_assets">Muat assets.zip</string>
     <string name="action_reload_assets">Ganti assets.zip</string>
@@ -27,8 +28,8 @@
     <!-- Status Aset -->
     <string name="assets_not_loaded">Aset belum dimuat</string>
     <string name="assets_loading">Memuat aset…</string>
-    <string name="assets_loaded_summary">%1$d TXD, %2$d sprite</string>
-    <string name="assets_loaded_with_fonts">%1$d TXD, %2$d sprite, Font siap</string>
+    <string name="assets_loaded_summary">%1$d TXD • %2$d</string>
+    <string name="assets_loaded_with_fonts">%1$d TXD • %2$d • Font</string>
     <string name="assets_error_prefix">Gagal memuat aset: %1$s</string>
     <string name="assets_banner_prompt">Muat file assets.zip agar font dan sprite asli GTA SA tampil di kanvas.</string>
     <string name="assets_error_empty_zip">Arsip zip tidak berisi file fonts.dat atau .txd yang valid.</string>

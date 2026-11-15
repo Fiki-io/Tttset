@@ -21,11 +21,11 @@ object AppDimens {
     val BorderSelection = 1.5.dp
 
     val MinTouchTarget = 48.dp
-    val TopBarHeight = 52.dp
-    val LayerRailWidth = 212.dp
-    val InspectorWidth = 292.dp
-    val CompactRailWidth = 176.dp
-    val CompactInspectorWidth = 248.dp
+    val TopBarHeight = 46.dp
+    val LayerRailWidth = 220.dp
+    val InspectorWidth = 280.dp
+    val CompactRailWidth = 192.dp
+    val CompactInspectorWidth = 252.dp
     val MaxDialogWidth = 560.dp
     val SpriteGridCellSize = 72.dp
     val ColorSwatchSize = 24.dp

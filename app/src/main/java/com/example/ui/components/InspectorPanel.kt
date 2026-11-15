@@ -21,14 +21,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -40,6 +42,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -65,23 +69,54 @@ fun InspectorPanel(
     onUpdate: (recordHistory: Boolean, (TextDrawElement) -> TextDrawElement) -> Unit,
     onOpenColorPicker: (ColorTargetField) -> Unit,
     onOpenSpritePicker: () -> Unit,
+    onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val shape = RoundedCornerShape(AppDimens.RadiusMedium)
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .background(AppColors.SurfaceBase)
-            .border(AppDimens.BorderThin, AppColors.BorderSubtle)
+            .clip(shape)
+            .background(AppColors.SurfaceBase.copy(alpha = 0.94f))
+            .border(AppDimens.BorderThin, AppColors.BorderInteractive, shape)
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Main)
+                        event.changes.forEach { if (!it.isConsumed) it.consume() }
+                    }
+                }
+            }
             .padding(AppDimens.Space12)
     ) {
-        Text(
-            text = stringResource(R.string.panel_inspector_title),
-            style = MaterialTheme.typography.titleSmall,
-            color = AppColors.TextPrimary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Spacer(modifier = Modifier.height(AppDimens.Space8))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = stringResource(R.string.panel_inspector_title),
+                style = MaterialTheme.typography.titleSmall,
+                color = AppColors.TextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(
+                onClick = onClose,
+                modifier = Modifier
+                    .size(32.dp)
+                    .testTag("close_inspector_button")
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.cd_close_panel),
+                    tint = AppColors.TextSecondary,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(AppDimens.Space6))
 
         if (element == null) {
             Box(

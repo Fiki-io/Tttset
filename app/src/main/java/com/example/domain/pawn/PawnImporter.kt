@@ -45,6 +45,8 @@ object PawnImporter {
                         x = x,
                         y = y,
                         text = text,
+                        textSizeX = 640f,
+                        textSizeY = 0f,
                         zOrder = nextZ++
                     )
                 }
@@ -66,6 +68,8 @@ object PawnImporter {
                         x = x,
                         y = y,
                         text = text,
+                        textSizeX = 640f,
+                        textSizeY = 0f,
                         zOrder = nextZ++
                     )
                 }

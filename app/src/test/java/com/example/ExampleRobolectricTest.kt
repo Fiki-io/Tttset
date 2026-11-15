@@ -42,8 +42,13 @@ class ExampleRobolectricTest {
             composeTestRule.onAllNodesWithText("Project Baru").fetchSemanticsNodes().isNotEmpty()
         }
 
+        composeTestRule.onNodeWithTag("top_layers_toggle").performClick()
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithTag("add_text_button").performClick()
         composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("inspector_var_name_input").assertIsDisplayed()
 
         composeTestRule.onNodeWithTag("top_export_pawn_button").performClick()
         composeTestRule.waitForIdle()

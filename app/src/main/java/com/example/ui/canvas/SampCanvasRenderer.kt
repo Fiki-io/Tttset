@@ -475,7 +475,7 @@ private fun DrawScope.drawBitmapAtlasText(
                         val srcX = col * cellW
                         val srcY = row * cellH
                         val dstX = cursorX * scaleX
-                        val glyphDrawW = (cellW * 0.72f * glyphWidthScale).coerceAtLeast(2f)
+                        val glyphDrawW = (32.0f * glyphWidthScale).coerceAtLeast(2f)
 
                         // Shadow
                         if (shadowShift > 0) {

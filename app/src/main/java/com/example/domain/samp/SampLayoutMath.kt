@@ -97,9 +97,21 @@ object SampLayoutMath {
 
         val lineHeight = (element.letterSizeY.coerceAtLeast(0.05f) * FONT_SCALE_Y_FACTOR)
         val wrapWidthLimit = when (element.alignment) {
-            TdAlignment.LEFT -> (element.textSizeX - element.x).coerceAtLeast(8f)
-            TdAlignment.CENTER -> element.textSizeY.coerceAtLeast(8f)
-            TdAlignment.RIGHT -> (element.x - element.textSizeX).coerceAtLeast(8f)
+            TdAlignment.LEFT -> if (element.textSizeX <= element.x && !element.useBox) {
+                (AppConstants.CANVAS_VIRTUAL_WIDTH - element.x).coerceAtLeast(32f)
+            } else {
+                (element.textSizeX - element.x).coerceAtLeast(8f)
+            }
+            TdAlignment.CENTER -> if (element.textSizeY <= 0f) {
+                AppConstants.CANVAS_VIRTUAL_WIDTH
+            } else {
+                element.textSizeY.coerceAtLeast(8f)
+            }
+            TdAlignment.RIGHT -> if ((element.textSizeX <= 0f || element.textSizeX >= element.x) && !element.useBox) {
+                element.x.coerceAtLeast(32f)
+            } else {
+                (element.x - element.textSizeX).coerceAtLeast(8f)
+            }
         }
 
         val rawLines = SampColorUtils.parseColorTagsToLines(element.text, element.colorRgba)
